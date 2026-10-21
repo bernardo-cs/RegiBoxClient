@@ -16,6 +16,7 @@ This project is independent of RegiBox.
 - `Sources/RegiBoxClient/OSRMClient.swift`: optional driving-time lookup.
 - `Sources/RegiBoxDemo/RegiBoxDemo.swift`: `regybox` command-line app.
 - `Tests/RegiBoxClientTests/`: fixture tests and opt-in live integration tests.
+- `Formula/regybox.rb`: Homebrew formula. Copy it to the `bernardo-cs/homebrew-tap` repo on each release and update `url` and `sha256`.
 
 ## Current app routes
 

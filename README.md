@@ -35,13 +35,43 @@ book or cancel a place.
 
 ## Installation
 
+### CLI (Homebrew)
+
+Install the `regybox` command-line tool on macOS with Homebrew:
+
+```bash
+brew install bernardo-cs/tap/regybox
+```
+
+To build the latest unreleased code from the `main` branch instead:
+
+```bash
+brew install --HEAD bernardo-cs/tap/regybox
+```
+
+Check the installation:
+
+```bash
+regybox --version
+regybox --help
+```
+
+### CLI (from source)
+
+```bash
+git clone https://github.com/bernardo-cs/RegiBoxClient.git
+cd RegiBoxClient
+swift build -c release
+cp .build/release/regybox /usr/local/bin/
+```
+
 ### Swift Package Manager
 
 Add to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/bcsimoes/RegiBoxClient.git", branch: "main")
+    .package(url: "https://github.com/bernardo-cs/RegiBoxClient.git", branch: "main")
 ]
 ```
 
@@ -499,9 +529,10 @@ enum KeychainHelper {
 - Offline caching
 - Widget support
 
-## CLI Demo
+## CLI
 
-A command-line demo tool is included for testing:
+The `regybox` command-line tool is included in the package. Install it with Homebrew
+(see [Installation](#installation)) or run it from the checkout with `regybox`.
 
 ```bash
 # Set credentials for commands that require login. Keep them out of source control.
@@ -510,26 +541,26 @@ export REGIBOX_PASSWORD="yourpassword"
 export REGIBOX_BOX_ID="299"
 
 # List boxes
-swift run regybox list-boxes
+regybox list-boxes
 
 # List today's classes
-swift run regybox classes
+regybox classes
 
 # List classes for specific date
-swift run regybox classes --date 2026-01-15
+regybox classes --date 2026-01-15
 
 # Get class details
-swift run regybox class-detail 84998 --date 2026-01-12
+regybox class-detail 84998 --date 2026-01-12
 
 # Run full demo
-swift run regybox
+regybox
 
 # Drop-In commands
-swift run regybox dropin-boxes                              # List all drop-in boxes with GPS
-swift run regybox dropin-details --target-box-id 1          # Get box rules & schedule
-swift run regybox dropin-classes --target-box-id 1          # List classes at a box
-swift run regybox dropin-register --target-box-id 1 --class-id 57105    # Register
-swift run regybox dropin-unregister --target-box-id 1 --class-id 57105  # Unregister
+regybox dropin-boxes                              # List all drop-in boxes with GPS
+regybox dropin-details --target-box-id 1          # Get box rules & schedule
+regybox dropin-classes --target-box-id 1          # List classes at a box
+regybox dropin-register --target-box-id 1 --class-id 57105    # Register
+regybox dropin-unregister --target-box-id 1 --class-id 57105  # Unregister
 ```
 
 ## Models

@@ -397,6 +397,7 @@ struct RegiBoxDemo: AsyncParsableCommand {
           2 - Authentication failure
           3 - Network or API error
         """,
+        version: "0.1.0",
         subcommands: [
             ListBoxes.self,
             Login.self,
