@@ -1,0 +1,28 @@
+.DS_Store
+/.build
+/Packages
+xcuserdata/
+DerivedData/
+.swiftpm/configuration/registries.json
+.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+.netrc
+
+# Environment files with secrets
+.envrc
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+
+# Compiled binaries
+regybox
+regybox-linux
+regibox-demo-linux
+
+# Test artifacts
+qr-code-page.png
+
+# Playwright MCP
+.playwright-mcp/
