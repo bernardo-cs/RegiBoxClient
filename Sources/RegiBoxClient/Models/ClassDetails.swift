@@ -48,23 +48,30 @@ public struct Workout: Sendable {
     /// Non-standard workout sections not covered by the 4 known fields
     public let additionalSections: [WorkoutSection]
 
+    /// Plain text of the workout page, set only when no section could be parsed.
+    /// Callers (and agents) can read it when the page layout is unknown.
+    public let rawText: String?
+
     public init(
         warmUp: String? = nil,
         skill: String? = nil,
         strength: String? = nil,
         condition: String? = nil,
-        additionalSections: [WorkoutSection] = []
+        additionalSections: [WorkoutSection] = [],
+        rawText: String? = nil
     ) {
         self.warmUp = warmUp
         self.skill = skill
         self.strength = strength
         self.condition = condition
         self.additionalSections = additionalSections
+        self.rawText = rawText
     }
 
     /// Whether the workout has any content
     public var isEmpty: Bool {
         warmUp == nil && skill == nil && strength == nil && condition == nil && additionalSections.isEmpty
+            && (rawText?.isEmpty ?? true)
     }
 
     /// All non-empty sections as a formatted string
@@ -87,6 +94,10 @@ public struct Workout: Sendable {
             parts.append("\(section.name.uppercased()):\n\(section.content)")
         }
 
+        if parts.isEmpty, let rawText, !rawText.isEmpty {
+            parts.append("UNPARSED WORKOUT PAGE (plain text):\n\(rawText)")
+        }
+
         return parts.joined(separator: "\n\n")
     }
 }
@@ -98,6 +109,7 @@ extension Workout: Equatable {
             && lhs.strength == rhs.strength
             && lhs.condition == rhs.condition
             && lhs.additionalSections == rhs.additionalSections
+            && lhs.rawText == rhs.rawText
     }
 }
 

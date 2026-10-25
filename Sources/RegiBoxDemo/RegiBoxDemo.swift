@@ -194,6 +194,8 @@ struct ClassDetailWorkoutJSON: Encodable {
     let strength: String?
     let condition: String?
     let additionalSections: [AdditionalSectionJSON]?
+    /// Plain text of the workout page when the sections could not be parsed.
+    let rawText: String?
 }
 
 struct ClassDetailParticipantJSON: Encodable {
@@ -397,7 +399,7 @@ struct RegiBoxDemo: AsyncParsableCommand {
           2 - Authentication failure
           3 - Network or API error
         """,
-        version: "0.1.0",
+        version: "0.1.1",
         subcommands: [
             ListBoxes.self,
             Login.self,
@@ -1376,7 +1378,8 @@ struct ClassDetail: AsyncParsableCommand {
                     skill: workout.skill,
                     strength: workout.strength,
                     condition: workout.condition,
-                    additionalSections: additional
+                    additionalSections: additional,
+                    rawText: workout.rawText
                 )
             } else {
                 workoutJSON = nil
@@ -2647,7 +2650,8 @@ struct DropInNearbyClasses: AsyncParsableCommand {
                         skill: workout.skill,
                         strength: workout.strength,
                         condition: workout.condition,
-                        additionalSections: additional
+                        additionalSections: additional,
+                        rawText: workout.rawText
                     )
                 }
 

@@ -64,8 +64,21 @@ final class CurrentAppParserTests: XCTestCase {
         XCTAssertEqual(workout.additionalSections, [WorkoutSection(name: "Cool Down", content: "Stretch")])
     }
 
-    func testWorkoutFeedWithUnknownLayoutIsEmpty() {
-        XCTAssertTrue(HTMLParserV3.workout("<div class=\"wod\">Annie</div>")?.isEmpty ?? true)
+    func testWorkoutFeedWithUnknownLayoutFallsBackToText() throws {
+        let html = """
+        <script>var x = 1;</script><style>.a{}</style>
+        <div class="new-layout"><h3>Conditioning</h3><p>FOR TIME:<br/>50 Double Unders</p></div>
+        """
+        let workout = try XCTUnwrap(HTMLParserV3.workout(html))
+        XCTAssertNil(workout.condition)
+        XCTAssertFalse(workout.isEmpty)
+        XCTAssertEqual(workout.rawText, "Conditioning\nFOR TIME:\n50 Double Unders")
+        XCTAssertTrue(workout.formattedDescription.contains("50 Double Unders"))
+    }
+
+    func testParsedWorkoutHasNoRawText() throws {
+        let html = #"<div class="wod-card"><div class="wod-card-title">Skill</div><div class="wod-card-desc">Handstand</div></div>"#
+        XCTAssertNil(try XCTUnwrap(HTMLParserV3.workout(html)).rawText)
     }
 
     func testUnexpectedPayloadDoesNotBecomeEmptyResults() {

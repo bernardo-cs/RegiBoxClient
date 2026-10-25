@@ -123,14 +123,7 @@ enum HTMLParserV3 {
         for card in cards {
             let title = text(card, ".wod-card-title")
             guard let desc = try? card.select(".wod-card-desc").first() else { continue }
-            _ = try? desc.select("br").append("\\n")
-            let body = ((try? desc.text(trimAndNormaliseWhitespace: false)) ?? "")
-                .replacingOccurrences(of: "\\n", with: "\n")
-                .split(separator: "\n", omittingEmptySubsequences: false)
-                .map { $0.trimmingCharacters(in: .whitespaces) }
-                .joined(separator: "\n")
-                .replacingOccurrences(of: "\n\n\n+", with: "\n\n", options: .regularExpression)
-                .trimmingCharacters(in: .whitespacesAndNewlines)
+            let body = multilineText(desc)
             guard !body.isEmpty else { continue }
             let key: String?
             switch title.lowercased().replacingOccurrences(of: "-", with: "").replacingOccurrences(of: " ", with: "") {
@@ -142,8 +135,28 @@ enum HTMLParserV3 {
             }
             if let key, known[key] == nil { known[key] = body } else { extra.append(WorkoutSection(name: title, content: body)) }
         }
+        var raw: String?
+        if known.isEmpty && extra.isEmpty, let body = document.body() {
+            _ = try? body.select("script, style, noscript, template").remove()
+            let text = multilineText(body)
+            raw = text.isEmpty ? nil : text
+        }
         return Workout(warmUp: known["warmUp"], skill: known["skill"], strength: known["strength"],
-                       condition: known["condition"], additionalSections: extra)
+                       condition: known["condition"], additionalSections: extra, rawText: raw)
+    }
+
+    /// Text of an element with line breaks kept for `<br>` and block elements.
+    private static func multilineText(_ element: Element) -> String {
+        let marker = "\u{1F}"
+        _ = try? element.select("br, div, p, li, tr, h1, h2, h3, h4, h5, h6").append(marker)
+        let text = ((try? element.text(trimAndNormaliseWhitespace: false)) ?? "")
+            .replacingOccurrences(of: marker, with: "\n")
+        let lines = text.split(separator: "\n", omittingEmptySubsequences: false)
+            .map { $0.replacingOccurrences(of: "[ \t\u{A0}]+", with: " ", options: .regularExpression)
+                .trimmingCharacters(in: .whitespaces) }
+        return lines.joined(separator: "\n")
+            .replacingOccurrences(of: "\n\n\n+", with: "\n\n", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     static func dropInBoxes(_ html: String) -> [DropInBox] {
