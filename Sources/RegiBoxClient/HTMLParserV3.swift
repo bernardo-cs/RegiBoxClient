@@ -108,6 +108,44 @@ enum HTMLParserV3 {
         return ClassDetails(classInfo: classInfo, instructors: instructor, workout: nil, participants: participants)
     }
 
+    /// Route of the workout feed that the class detail page loads with AJAX.
+    static func workoutFeedPath(_ html: String) -> String? {
+        guard let route = match("cd_wod_url\\s*=\\s*'([^']+)'", in: html) else { return nil }
+        return route.hasPrefix("/") ? route : "/" + route
+    }
+
+    /// Parses the workout feed (`pages/cross/load_wod_dia.php`). Sections without a description are skipped.
+    static func workout(_ html: String) -> Workout? {
+        guard let document = try? SwiftSoup.parse(html),
+              let cards = try? document.select(".wod-card").array() else { return nil }
+        var known: [String: String] = [:]
+        var extra: [WorkoutSection] = []
+        for card in cards {
+            let title = text(card, ".wod-card-title")
+            guard let desc = try? card.select(".wod-card-desc").first() else { continue }
+            _ = try? desc.select("br").append("\\n")
+            let body = ((try? desc.text(trimAndNormaliseWhitespace: false)) ?? "")
+                .replacingOccurrences(of: "\\n", with: "\n")
+                .split(separator: "\n", omittingEmptySubsequences: false)
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+                .joined(separator: "\n")
+                .replacingOccurrences(of: "\n\n\n+", with: "\n\n", options: .regularExpression)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !body.isEmpty else { continue }
+            let key: String?
+            switch title.lowercased().replacingOccurrences(of: "-", with: "").replacingOccurrences(of: " ", with: "") {
+            case "warmup", "aquecimento": key = "warmUp"
+            case "skill", "técnica", "tecnica": key = "skill"
+            case "strength", "força", "forca": key = "strength"
+            case "conditioning", "metcon", "wod": key = "condition"
+            default: key = nil
+            }
+            if let key, known[key] == nil { known[key] = body } else { extra.append(WorkoutSection(name: title, content: body)) }
+        }
+        return Workout(warmUp: known["warmUp"], skill: known["skill"], strength: known["strength"],
+                       condition: known["condition"], additionalSections: extra)
+    }
+
     static func dropInBoxes(_ html: String) -> [DropInBox] {
         guard let items = embeddedJSON(html, variable: "boxes") as? [[String: Any]] else { return [] }
         return items.compactMap { item in

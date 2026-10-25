@@ -238,7 +238,11 @@ public final class RegiBoxClient: @unchecked Sendable {
         guard let details = HTMLParserV3.classDetails(html, classInfo: classItem) else {
             throw ClientError.parsingError("Could not parse current class details")
         }
-        return details
+        guard let feed = HTMLParserV3.workoutFeedPath(html),
+              let feedHTML = try? await currentHTML(feed),
+              let workout = HTMLParserV3.workout(feedHTML), !workout.isEmpty else { return details }
+        return ClassDetails(classInfo: details.classInfo, instructors: details.instructors,
+                            workout: workout, participants: details.participants)
     }
 
     /// Get the user's registered drop-in classes from the main page

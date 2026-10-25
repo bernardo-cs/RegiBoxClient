@@ -30,6 +30,44 @@ final class CurrentAppParserTests: XCTestCase {
         XCTAssertEqual(boxes.first?.latitude, 38.7)
     }
 
+    func testClassDetailPageExposesWorkoutFeed() {
+        let html = """
+        <div class="page"><div class="nome_prof">Coach</div><div id="cd_wod_feed"></div></div>
+        <script>
+        var cd_wod_url = 'pages/cross/load_wod_dia.php?date=2026-10-26&tipo=1&src=aula';
+        $('#cd_wod_feed').load(cd_wod_url);
+        </script>
+        """
+        XCTAssertEqual(HTMLParserV3.workoutFeedPath(html), "/pages/cross/load_wod_dia.php?date=2026-10-26&tipo=1&src=aula")
+        XCTAssertNil(HTMLParserV3.workoutFeedPath("<div class=\"page\"></div>"))
+    }
+
+    func testWorkoutFeed() throws {
+        let html = """
+        <script>window.wod_play_video = function(el){};</script>
+        <div class="wod-group"><div class="wod-group-body">
+          <div class="card wod-card"><div class="wod-card-head"><div class="wod-card-title">Warm-Up</div></div>
+            <div class="wod-card-desc texto14">3 rounds<br/>10 air squats</div></div>
+          <div class="card wod-card"><div class="wod-card-head"><div class="wod-card-title">Skill</div></div>
+            <div class="wod-card-types">Qualidade</div></div>
+          <div class="card wod-card"><div class="wod-card-head"><div class="wod-card-title">Conditioning</div>
+            <div class="wod-badges"><span class="wod-badge">2</span></div></div>
+            <div class="wod-card-desc texto14">Annie &amp; Karen<br/><br/>FOR TIME:<br/><br/>50-40-30-20-10<br/>Double Unders each</div></div>
+          <div class="card wod-card"><div class="wod-card-head"><div class="wod-card-title">Cool Down</div></div>
+            <div class="wod-card-desc">Stretch</div></div>
+        </div></div>
+        """
+        let workout = try XCTUnwrap(HTMLParserV3.workout(html))
+        XCTAssertEqual(workout.warmUp, "3 rounds\n10 air squats")
+        XCTAssertNil(workout.skill, "Sections without a description are skipped")
+        XCTAssertEqual(workout.condition, "Annie & Karen\n\nFOR TIME:\n\n50-40-30-20-10\nDouble Unders each")
+        XCTAssertEqual(workout.additionalSections, [WorkoutSection(name: "Cool Down", content: "Stretch")])
+    }
+
+    func testWorkoutFeedWithUnknownLayoutIsEmpty() {
+        XCTAssertTrue(HTMLParserV3.workout("<div class=\"wod\">Annie</div>")?.isEmpty ?? true)
+    }
+
     func testUnexpectedPayloadDoesNotBecomeEmptyResults() {
         XCTAssertTrue(HTMLParserV3.classes("<h1>Esta APP deixou de funcionar</h1>", date: "2026-10-20").isEmpty)
         XCTAssertTrue(HTMLParserV3.dropInBoxes("<h1>Login</h1>").isEmpty)
@@ -67,5 +105,20 @@ final class CurrentAppIntegrationTests: XCTestCase {
         _ = try await client.getDropInHistory()
         let qr = try await client.getCheckInQRCode()
         XCTAssertTrue(qr.imageData.starts(with: [0x89, 0x50, 0x4e, 0x47]))
+    }
+
+    /// Fails when no Cross Training class in the next days shows a workout.
+    /// That usually means the class detail page or the workout feed changed.
+    func testClassDetailsIncludeWorkout() async throws {
+        let client = try await signedInClient()
+        defer { client.logout() }
+        for offset in 0..<4 {
+            let date = Calendar.current.date(byAdding: .day, value: offset, to: Date())!
+            let classes = try await client.getClasses(for: date)
+            guard let cross = classes.first(where: { $0.name.uppercased().contains("CROSS") && $0.detailsURL != nil }) else { continue }
+            let details = try await client.getClassDetails(cross)
+            if let workout = details.workout, !workout.isEmpty { return }
+        }
+        XCTFail("No Cross Training class in the next 4 days returned a workout")
     }
 }
