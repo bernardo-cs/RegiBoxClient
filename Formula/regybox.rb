@@ -1,8 +1,8 @@
 class Regybox < Formula
   desc "Unofficial command-line client for RegiBox gym class bookings"
   homepage "https://github.com/bernardo-cs/RegiBoxClient"
-  url "https://github.com/bernardo-cs/RegiBoxClient/archive/refs/tags/v0.1.0.tar.gz"
-  sha256 "3dc33ce06a67f4af710b04606d193f5d3953f43434977d326cc8104deaa070b3"
+  url "https://github.com/bernardo-cs/RegiBoxClient/archive/refs/tags/v0.1.1.tar.gz"
+  sha256 "5ef4424841f365d1ca5c7f1d80e8dceb7bcb268b87f59b3d51b7a5db4c1ec9cd"
   license "MIT"
   head "https://github.com/bernardo-cs/RegiBoxClient.git", branch: "main"
 
